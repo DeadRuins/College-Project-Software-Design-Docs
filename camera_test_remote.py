@@ -3,6 +3,7 @@ import time
 import threading
 import uvicorn
 import pygame
+import locale
 from fastapi import FastAPI, Response
 from fastapi.responses import FileResponse, HTMLResponse
 
@@ -25,42 +26,11 @@ async def trigger_alarm():
 # This route serves the image to your phone
 @app.get("/", response_class=HTMLResponse)
 async def index():
-    html_content = """
-    <html>
-        <head>
-            <title>Security Camera</title>
-            <script>
-                async function soundAlarm() {
-                    const btn = document.getElementById('alarmBtn');
-                    btn.disabled = true;
-                    btn.innerText = 'Ringing...';
-
-                    await fetch('/trigger-alarm', { method: 'POST' });
-
-                    setTimeout(() => {
-                        btn.disabled = false;
-                        btn.innerText = 'TRIGGER ALARM';
-                    }, 3000);
-                }
-
-                document.getElementById('time').innerHTML = new Date().toLocaleTimeString();
-            </script>
-
-        </head>
-        <body style="background: #222; color: white; text-align: center; font-family: sans-serif;">
-            <h1>Live Feed (updates every 10s)</h1>
-            <img src="/latest" style="max-width: 90%; border: 5px solid #444;">
-            <p>Last refresh: <span id="time"></span></p>
-
-            <button id="alarmBtn" onclick="soundAlarm()"
-                style="padding: 20px 40px; font-size: 24px; background: red; color: white; border: none; border-radius: 10px; cursor: pointer;">
-                TRIGGER ALARM
-            </button>
-
-        </body>
-    </html>
-    """
-    return HTMLResponse(content=html_content, status_code=200)
+    with open("website.html") as f:
+        html_content = f.read()
+        print(type(html_content))
+        print(html_content)
+        return HTMLResponse(content=html_content, status_code=200)
 
 @app.get("/latest")
 async def get_latest():
