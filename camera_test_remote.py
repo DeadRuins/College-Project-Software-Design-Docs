@@ -13,6 +13,7 @@ latest_frame = None
 ALARM_PATH = "alarm.ogg"
 
 @app.post("/trigger-alarm")
+@app.get("/trigger-alarm")
 async def trigger_alarm():
     try:
         pygame.mixer.init()
