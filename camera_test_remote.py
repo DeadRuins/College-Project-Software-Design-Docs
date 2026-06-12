@@ -4,11 +4,14 @@ import threading
 import uvicorn
 import pygame
 import locale
-from fastapi import FastAPI, Response
+from fastapi import FastAPI, Response, Request
 from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.templating import Jinja2Templates
 
 app = FastAPI()
 latest_frame = None
+tempature = 24
+templates = Jinja2Templates(directory=".")
 
 ALARM_PATH = "alarm.ogg"
 
@@ -26,12 +29,19 @@ async def trigger_alarm():
 
 # This route serves the image to your phone
 @app.get("/", response_class=HTMLResponse)
-async def index():
-    with open("website.html") as f:
-        html_content = f.read()
-        print(type(html_content))
-        print(html_content)
-        return HTMLResponse(content=html_content, status_code=200)
+async def index(request: Request):
+
+    return templates.TemplateResponse(
+        request=request,
+        name="website.html",
+        context={"tempature_to_show": tempature}
+    )
+
+    #with open("website.html") as f:
+    #    html_content = f.read()
+    #    print(type(html_content))
+    #    print(html_content)
+    #    return HTMLResponse(content=html_content, status_code=200)
 
 @app.get("/latest")
 async def get_latest():
