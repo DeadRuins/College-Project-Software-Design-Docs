@@ -5,6 +5,7 @@ import uvicorn
 import pygame
 import locale
 import pandas
+import numpy
 from pathlib import Path  # <-- 1. FIXED: Added missing import
 from fastapi import FastAPI, Response, Request
 from fastapi.responses import FileResponse, HTMLResponse
@@ -69,7 +70,7 @@ async def index(request: Request):
         request=request,
         name="website.html",
         context={
-            "tempature_to_show": stats["latest"],  # <-- 3. FIXED: Using live data now instead of 24
+            "tempature_to_show": stats["latest"],
             "avg_temp": stats["avg"],
             "sum_temp": stats["sum"]
         }
@@ -82,7 +83,36 @@ async def get_latest():
 class VideoHandler:
     def __init__(self):
         self.cap = cv2.VideoCapture(0)
-        self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
+        self.camera_working = self.cap.isOpened()
+
+        if self.camera_working:
+            self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
+        else:
+            self.create_placeholder_image()
+            print("No Camera Detected!")
+
+
+    def create_placeholder_image(self):
+        """Generates a simple gray image saying 'Camera Not Connected'"""
+        # Create a solid gray background (480x640 pixels, 3 color channels)
+        placeholder = numpy.zeros((480, 640, 3), dtype=numpy.uint8) + 100
+
+        # Add text to the image
+        text = "Camera Not Connected"
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        text_scale = 1
+        text_thickness = 2
+        text_color = (255, 255, 255) # White text
+
+        # Figure out text size to center it
+        text_size = cv2.getTextSize(text, font, text_scale, text_thickness)[0]
+        text_x = (placeholder.shape[1] - text_size[0]) // 2
+        text_y = (placeholder.shape[0] + text_size[1]) // 2
+
+        cv2.putText(placeholder, text, (text_x, text_y), font, text_scale, text_color, text_thickness)
+
+        # Save it as the fallback view
+        cv2.imwrite("current_view.webp", placeholder, [cv2.IMWRITE_WEBP_QUALITY, 80])
 
     def run_camera(self):
         last_save_time = time.time()
