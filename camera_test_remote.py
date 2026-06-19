@@ -115,10 +115,17 @@ class VideoHandler:
         cv2.imwrite("current_view.webp", placeholder, [cv2.IMWRITE_WEBP_QUALITY, 80])
 
     def run_camera(self):
+        if not self.camera_working:
+            print("Camera handler is idling smoothly. Server is online.")
+            while True:
+                time.sleep(1)
+
         last_save_time = time.time()
         while True:
             ret, frame = self.cap.read()
-            if not ret: break
+            if not ret:
+                print("Camera stream disconnected.")
+                break
 
             cv2.imshow("Frame", frame)
 
