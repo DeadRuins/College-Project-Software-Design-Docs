@@ -4,16 +4,46 @@ import threading
 import uvicorn
 import pygame
 import locale
+import pandas
+from pathlib import Path  # <-- 1. FIXED: Added missing import
 from fastapi import FastAPI, Response, Request
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
 
 app = FastAPI()
 latest_frame = None
-tempature = 24
 templates = Jinja2Templates(directory=".")
-
 ALARM_PATH = "alarm.ogg"
+
+def get_latest_temperature(csv_file_path):
+    """Reads the CSV and returns the latest temperature and stats."""
+    try:
+        df = pandas.read_csv(csv_file_path, parse_dates=["Timestamp"])
+
+        if df.empty:
+            print("The CSV file is empty.")
+            return {"latest": "N/A", "avg": "N/A", "sum": "N/A"}
+
+        # Calculate metrics
+        total_sum = df["Temperature (°C)"].sum()
+        average_temp = df["Temperature (°C)"].mean()
+        latest_entry = df.iloc[-1]
+
+        print(f"--- Live Update: Latest Temp is {latest_entry['Temperature (°C)']}°C ---")
+
+        return {
+            "latest": f"{latest_entry['Temperature (°C)']:.1f}",
+            "avg": f"{average_temp:.1f}",
+            "sum": f"{total_sum:.1f}"
+        }
+
+    except FileNotFoundError:
+        print(f"Error: The file at '{csv_file_path}' was not found.")
+        return {"latest": "No File", "avg": "N/A", "sum": "N/A"}
+    except KeyError:
+        print("Error: Column name mismatch in CSV.")
+        return {"latest": "Error", "avg": "N/A", "sum": "N/A"}
+
 
 @app.post("/trigger-alarm")
 @app.get("/trigger-alarm")
@@ -30,18 +60,20 @@ async def trigger_alarm():
 # This route serves the image to your phone
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
+    # Fetch live data right when the user requests the page
+    script_dir = Path(__file__).parent.resolve()
+    csv_path = script_dir / "temperature_log.csv"
+    stats = get_latest_temperature(csv_path)
 
     return templates.TemplateResponse(
         request=request,
         name="website.html",
-        context={"tempature_to_show": tempature}
+        context={
+            "tempature_to_show": stats["latest"],  # <-- 3. FIXED: Using live data now instead of 24
+            "avg_temp": stats["avg"],
+            "sum_temp": stats["sum"]
+        }
     )
-
-    #with open("website.html") as f:
-    #    html_content = f.read()
-    #    print(type(html_content))
-    #    print(html_content)
-    #    return HTMLResponse(content=html_content, status_code=200)
 
 @app.get("/latest")
 async def get_latest():
@@ -75,6 +107,5 @@ def start_server():
 
 if __name__ == "__main__":
     handler = VideoHandler()
-    # Run the server in a separate thread so the camera loop doesn't stop
     threading.Thread(target=start_server, daemon=True).start()
     handler.run_camera()
