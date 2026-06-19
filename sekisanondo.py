@@ -5,23 +5,59 @@ file_path = "temperature_log.csv" #シュミレーション用ファイル
 #file_path = "sensor_data.csv"     #実機用ファイル
 temperatures = []
 
-# CSVファイルを開く
+# --- 1. 標準入力から計算開始日を受け取る (Web上から入力できるようにしたい...)---
+print("トマトの花が受粉した日(ホルモン処理した日)を入力してください")
+print("入力例: 2026-06-19")
+user_input = input("開始日 > ")
+
+try:
+    # 入力された文字列を日付データ（時間の初期値は 00:00:00）に変換
+    start_date = datetime.strptime(user_input, "%Y-%m-%d")
+except ValueError:
+    print("【エラー】入力形式が正しくありません。'2026-06-19' のように入力してください。")
+    exit()  # プログラムを終了
+
+# 日付ごとのデータを記録するための辞書
+# 構造例: {"2026-06-19": {"total_temp": 508.8, "count": 23}}
+daily_data = {}
+
+# ---2. CSVファイルを読み込んで日別に集計---
 with open(file_path, mode="r", encoding="utf-8") as file:
-    reader = csv.DictReader(file)  # ヘッダー名でデータにアクセスできる形式で読み込み
+    reader = csv.DictReader(file)
 
     for row in reader:
-        # 文字列から浮動小数点数(double/float)に変換してリストに追加
-        temp_value = float(row["Temperature (°C)"])
-        temperatures.append(temp_value)
+        # 文字列を一度日時のオブジェクトに変換
+        row_datetime = datetime.strptime(row["Timestamp"], "%Y-%m-%d %H:%M:%S")
 
-# 結果の確認
-print("読み込んだ温度リスト（double型）:")
-print(temperatures)
-#print(f"データの型: {type(temperatures[0])}")
+        # 基準日以降のデータのみ対象にする
+        if row_datetime >= start_date:
+            # 日時オブジェクトから「年-月-日」の文字列だけを抽出 (例: "2026-06-19")
+            date_str = row_datetime.strftime("%Y-%m-%d")
+            temp_value = float(row["Temperature (°C)"])
 
-sekisanondo=0.0
-for temperature in temperatures:
-    sekisanondo = sekisanondo + temperature
+            # まだ辞書にその日の一覧がなければ初期化
+            if date_str not in daily_data:
+                daily_data[date_str] = {"total_temp": 0.0, "count": 0}
 
-print("積算温度:")
-print(round(sekisanondo,1))
+            # その日の「合計温度」と「データ数」を足していく
+            daily_data[date_str]["total_temp"] += temp_value
+            daily_data[date_str]["count"] += 1
+
+# 3. 結果の出力
+print("\n" + "="*45)
+print(f" {user_input} 以降の1日ごとの集計結果 (標準csv)")
+print("="*45)
+
+if daily_data:
+    # 日付の古い順に並び替えて出力
+    for date_str in sorted(daily_data.keys()):
+        total = daily_data[date_str]["total_temp"]
+        count = daily_data[date_str]["count"]
+        # 平均を計算
+        avg_temp = total / count
+        
+        print(f"日付: {date_str} | データ数: {count}件 | 平均温度: {avg_temp:.1f}°C")
+else:
+    print(" 該当するデータがありませんでした。")
+
+print("="*45)
