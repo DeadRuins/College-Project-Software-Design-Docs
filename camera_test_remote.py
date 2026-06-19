@@ -82,7 +82,7 @@ async def get_latest():
 
 class VideoHandler:
     def __init__(self):
-        self.cap = cv2.VideoCapture(0)
+        self.cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
         self.camera_working = self.cap.isOpened()
 
         if self.camera_working:
