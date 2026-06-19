@@ -1,6 +1,8 @@
 import csv
 
-file_path = "temperature_log.csv"
+#ファイル名(どちらかコメントアウトして使う)
+file_path = "temperature_log.csv" #シュミレーション用ファイル
+#file_path = "sensor_data.csv"     #実機用ファイル
 temperatures = []
 
 # CSVファイルを開く
