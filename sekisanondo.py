@@ -1,9 +1,11 @@
 import csv
+from datetime import datetime
 
 #ファイル名(どちらかコメントアウトして使う)
 file_path = "temperature_log.csv" #シュミレーション用ファイル
 #file_path = "sensor_data.csv"     #実機用ファイル
-temperatures = []
+temps = [] #日平均気温を格納
+
 
 # --- 1. 標準入力から計算開始日を受け取る (Web上から入力できるようにしたい...)---
 print("トマトの花が受粉した日(ホルモン処理した日)を入力してください")
@@ -20,6 +22,7 @@ except ValueError:
 # 日付ごとのデータを記録するための辞書
 # 構造例: {"2026-06-19": {"total_temp": 508.8, "count": 23}}
 daily_data = {}
+
 
 # ---2. CSVファイルを読み込んで日別に集計---
 with open(file_path, mode="r", encoding="utf-8") as file:
@@ -43,7 +46,8 @@ with open(file_path, mode="r", encoding="utf-8") as file:
             daily_data[date_str]["total_temp"] += temp_value
             daily_data[date_str]["count"] += 1
 
-# 3. 結果の出力
+
+# ---3. 結果の出力---
 print("\n" + "="*45)
 print(f" {user_input} 以降の1日ごとの集計結果 (標準csv)")
 print("="*45)
@@ -57,7 +61,16 @@ if daily_data:
         avg_temp = total / count
         
         print(f"日付: {date_str} | データ数: {count}件 | 平均温度: {avg_temp:.1f}°C")
+        temps.append(avg_temp) #1日の平均温度を格納
 else:
     print(" 該当するデータがありませんでした。")
 
 print("="*45)
+
+# ---4. 積算温度の出力---
+sekisanondo = 0.0
+
+for temp in temps:
+    sekisanondo = sekisanondo + temp
+
+print(f"積算温度={sekisanondo:.1f}℃")
