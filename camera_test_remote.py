@@ -6,7 +6,8 @@ import pygame
 import locale
 import pandas
 import numpy
-from pathlib import Path  # <-- 1. FIXED: Added missing import
+import sekisanondo
+from pathlib import Path
 from fastapi import FastAPI, Response, Request
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
@@ -23,27 +24,29 @@ def get_latest_temperature(csv_file_path):
 
         if df.empty:
             print("The CSV file is empty.")
-            return {"latest": "N/A", "avg": "N/A", "sum": "N/A"}
+            return {"latest": "N/A", "avg": "N/A", "sum": "N/A", "TET": "N/A"}
 
         # Calculate metrics
         total_sum = df["Temperature (°C)"].sum()
         average_temp = df["Temperature (°C)"].mean()
         latest_entry = df.iloc[-1]
+        TET_Temp = sekisanondo.tempature_sum(csv_file_path)
 
         print(f"--- Live Update: Latest Temp is {latest_entry['Temperature (°C)']}°C ---")
 
         return {
             "latest": f"{latest_entry['Temperature (°C)']:.1f}",
             "avg": f"{average_temp:.1f}",
-            "sum": f"{total_sum:.1f}"
+            "sum": f"{total_sum:.1f}",
+            "TET": f"{TET_Temp:.1f}"
         }
 
     except FileNotFoundError:
         print(f"Error: The file at '{csv_file_path}' was not found.")
-        return {"latest": "No File", "avg": "N/A", "sum": "N/A"}
+        return {"latest": "N/A", "avg": "N/A", "sum": "N/A", "TET": "N/A"}
     except KeyError:
         print("Error: Column name mismatch in CSV.")
-        return {"latest": "Error", "avg": "N/A", "sum": "N/A"}
+        return {"latest": "N/A", "avg": "N/A", "sum": "N/A", "TET": "N/A"}
 
 
 @app.post("/trigger-alarm")
@@ -72,7 +75,8 @@ async def index(request: Request):
         context={
             "tempature_to_show": stats["latest"],
             "avg_temp": stats["avg"],
-            "sum_temp": stats["sum"]
+            "sum_temp": stats["sum"],
+            "TET": stats["TET"]
         }
     )
 
@@ -89,7 +93,7 @@ class VideoHandler:
             self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
         else:
             self.create_placeholder_image()
-            print("No Camera Detected!")
+            print("No Camera Detected. It runs on Non-Camera Mode instead. \nDo not use this outside of test purpose.")
 
 
     def create_placeholder_image(self):
