@@ -25,7 +25,7 @@ def tempature_sum(file_path):
         day = datetime.strptime(oldest_day, "%Y-%m-%d")
     except ValueError:
         print("【エラー】入力形式が正しくありません。'2026-06-19' のように入力してください。")
-        exit()  # プログラムを終了
+        return -1.0  # エラーのため、プログラムを強制終了させるのではなく、-1を出力
 
     # 日付ごとのデータを記録するための辞書
     # 構造例: {"2026-06-19": {"total_temp": 508.8, "count": 23}}
