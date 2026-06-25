@@ -6,11 +6,14 @@ import pygame
 import locale
 import pandas
 import numpy
-import sekisanondo
+import shutil
+
+import sekisanondo # unique to this program
 from pathlib import Path
 from fastapi import FastAPI, Response, Request
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
+from datetime import datetime
 
 app = FastAPI()
 latest_frame = None
@@ -125,6 +128,8 @@ class VideoHandler:
                 time.sleep(1)
 
         last_save_time = time.time()
+        last_date_time = str(datetime.now())
+
         while True:
             ret, frame = self.cap.read()
             if not ret:
@@ -134,9 +139,13 @@ class VideoHandler:
             cv2.imshow("Frame", frame)
 
             if time.time() - last_save_time >= 10:
-                cv2.imwrite("current_view.webp", frame, [cv2.IMWRITE_WEBP_QUALITY, 80])
                 last_save_time = time.time()
-                print("Image updated on server.")
+                print(last_date_time + ": Image updated on server.")
+                last_file_dir = "past_images/" + last_date_time + ".webp"
+                shutil.move("current_view.webp", last_file_dir)
+                print("The last current_view.webp was moved into: " + last_file_dir)
+                cv2.imwrite("current_view.webp", frame, [cv2.IMWRITE_WEBP_QUALITY, 80])
+                last_date_time = str(datetime.now())
 
             if cv2.waitKey(1) == 27: break
 
