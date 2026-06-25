@@ -13,12 +13,20 @@ from pathlib import Path
 from fastapi import FastAPI, Response, Request
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
 from datetime import datetime
+from pathlib import Path
 
 app = FastAPI()
 latest_frame = None
 templates = Jinja2Templates(directory=".")
 ALARM_PATH = "alarm.ogg"
+
+#For Image Viewer,
+SCRIPT_DIR = Path(__file__).parent.resolve()
+PAST_IMAGES_DIR = SCRIPT_DIR / "past_images"
+PAST_IMAGES_DIR.mkdir(exist_ok=True)
+app.mount("/past_images", StaticFiles(directory=str(PAST_IMAGES_DIR)), name="past_images")
 
 def get_latest_temperature(csv_file_path):
     """Reads the CSV and returns the latest temperature and stats."""
@@ -87,6 +95,23 @@ async def index(request: Request):
 async def get_latest():
     return FileResponse("current_view.webp", media_type="image/webp")
 
+@app.get("/history", response_class=HTMLResponse)
+async def history_viewer(request: Request):
+    history_dir = Path("past_images")
+
+    # Grab all webp files, sort them newest to oldest
+    if history_dir.exists():
+        images = [f.name for f in history_dir.glob("*.webp")]
+        images.sort(reverse=True)
+    else:
+        images = []
+
+    return templates.TemplateResponse(
+        request=request,
+        name="history.html",
+        context={"images": images}
+    )
+
 class VideoHandler:
     def __init__(self):
         self.cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
@@ -128,7 +153,7 @@ class VideoHandler:
                 time.sleep(1)
 
         last_save_time = time.time()
-        last_date_time = str(datetime.now())
+        last_date_time = datetime.now().strftime("%Y%m%d_%H%M%S")
 
         while True:
             ret, frame = self.cap.read()
@@ -145,7 +170,7 @@ class VideoHandler:
                 shutil.move("current_view.webp", last_file_dir)
                 print("The last current_view.webp was moved into: " + last_file_dir)
                 cv2.imwrite("current_view.webp", frame, [cv2.IMWRITE_WEBP_QUALITY, 80])
-                last_date_time = str(datetime.now())
+                last_date_time = datetime.now().strftime("%Y%m%d_%H%M%S")
 
             if cv2.waitKey(1) == 27: break
 
