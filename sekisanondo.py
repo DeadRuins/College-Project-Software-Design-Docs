@@ -83,3 +83,6 @@ def tempature_sum(file_path):
 
     print(f"積算温度={sekisanondo:.1f}℃")
     return sekisanondo
+
+    date_count=(1200 - sekisanondo)/ temp
+    print(f"収穫までの日数(予想)：{date_count:.1f}日")
