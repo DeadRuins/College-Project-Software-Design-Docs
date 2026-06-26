@@ -18,9 +18,9 @@ dhtDevice = adafruit_dht.DHT22(board.D18)
 while True:
     try:
         # Print the values to the serial port
-        temperature_c = dhtDevice.temperature
+        temperature_c = dhtDevice.temperature #温度を求める"dhtDevice.temperature"
         temperature_f = temperature_c * (9 / 5) + 32
-        humidity = dhtDevice.humidity
+        humidity = dhtDevice.humidity # 湿度を求める dhtDevice.humidity
         print(f"Temp: {temperature_f:.1f} F / {temperature_c:.1f} C    Humidity: {humidity}% ")
 
     except RuntimeError as error:
