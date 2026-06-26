@@ -46,10 +46,10 @@ def get_latest_temperature(csv_file_path):
             print("The CSV file is empty.")
             return {"latest": "N/A", "avg": "N/A", "sum": "N/A", "TET": "N/A"}
 
-        total_sum = df["Temperature (°C)"].sum()
+        #total_sum = df["Temperature (°C)"].sum()
         average_temp = df["Temperature (°C)"].mean()
         latest_entry = df.iloc[-1]
-        TET_Temp = sekisanondo.tempature_sum(csv_file_path)
+        TET_Temp, total_sum = sekisanondo.tempature_sum(csv_file_path)
 
         print(f"--- Live Update: Latest Temp is {latest_entry['Temperature (°C)']}°C ---")
 
