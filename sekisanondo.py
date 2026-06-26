@@ -1,6 +1,9 @@
 import csv
 from datetime import datetime
 
+# 保存するCSVファイル名
+FILENAME = "temperature_date_log.csv"
+
 def tempature_sum(file_path):
 
     #ファイル名(どちらかコメントアウトして使う)
@@ -69,7 +72,12 @@ def tempature_sum(file_path):
             avg_temp = total / count
 
             print(f"日付: {date_str} | データ数: {count}件 | 平均温度: {avg_temp:.1f}°C")
-            temps.append(avg_temp) #1日の平均温度を格納
+            temps.append(avg_temp) #1日の平均温度を行列に格納
+
+            # CSVファイルに格納（mode='a'）
+            with open(FILENAME, mode="a", newline="", encoding="utf-8") as file:
+                writer = csv.writer(file)
+                writer.writerow([avg_temp])
     else:
         print(" 該当するデータがありませんでした。")
 
