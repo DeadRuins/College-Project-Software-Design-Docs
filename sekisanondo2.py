@@ -92,7 +92,7 @@ def job():
     date_count=(1200 - sekisanondo)/ temp
     print(f"収穫までの日(予想)：{date_count:.1f}日")
 
-schedule.every().day.at("16:23:00").do(job)
+schedule.every().day.at("00:00:00").do(job)
 
 while True:
     schedule.run_pending()
