@@ -45,11 +45,15 @@ def get_latest_temperature(csv_file_path):
         if df.empty:
             print("The CSV file is empty.")
             return {"latest": "N/A", "avg": "N/A", "sum": "N/A", "TET": "N/A"}
+            
+        with open(Path("sekisan_tmp.txt"), mode='r', encoding="utf-8") as f:
+            print(f.read())
+            sekisan_date = f.read()
 
         #total_sum = df["Temperature (°C)"].sum()
         average_temp = df["Temperature (°C)"].mean()
         latest_entry = df.iloc[-1]
-        TET_Temp, total_sum = sekisanondo.tempature_sum(csv_file_path)
+        TET_Temp, total_sum = sekisanondo.tempature_sum(csv_file_path, sekisan_date)
 
         print(f"--- Live Update: Latest Temp is {latest_entry['Temperature (°C)']}°C ---")
 
@@ -77,6 +81,33 @@ async def trigger_alarm():
         pygame.mixer.music.play()
         print("Alarm Triggered!")
         return {"status": "success", "message": "Alarm is playing"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.post("/send-date")
+@app.get("/send-date")
+async def send_date(date: str = None):
+    try:
+        if date:
+            print(f"Received date from website: {date}")
+            # You can now parse it into a datetime object if needed:
+            date_obj = datetime.strptime(date, "%Y-%m-%d")
+
+            s = {date}
+            save_path = Path("sekisan_tmp.txt")
+            save_path.parent.mkdir(parents=True, exist_ok=True)
+            
+            with open(save_path, mode='w', encoding="utf-8") as f:
+                f.write(date)
+
+            with open(save_path, mode='r', encoding="utf-8") as f:
+                print(f.read())
+
+            f.close()
+            return {"status": "success", "message": f"Date {date} received successfully"}
+        else:
+            print("Send-date endpoint hit, but no date was provided.")
+            return {"status": "error", "message": "No date provided"}
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
@@ -164,7 +195,7 @@ class VideoHandler:
         if not self.camera_working:
             print("Camera handler is idling smoothly. Server is online.")
             while True:
-                if time.time() - last_save_time >= 10:
+                if time.time() - last_save_time >= 1800: #30 minutes
                     last_save_time = time.time()
                     now_formatted = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                     self.record_temperature(now_formatted)
