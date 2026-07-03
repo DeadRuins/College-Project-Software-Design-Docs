@@ -4,7 +4,7 @@ from datetime import datetime
 # 保存するCSVファイル名
 FILENAME = "temperature_date_log.csv"
 
-def tempature_sum(file_path):
+def tempature_sum(file_path, sekisan_date):
 
     #ファイル名(どちらかコメントアウトして使う)
     #file_path = "temperature_log.csv" #シュミレーション用ファイル
@@ -16,6 +16,7 @@ def tempature_sum(file_path):
     print("トマトの花が受粉した日(ホルモン処理した日)を入力してください")
     print("入力例: 2026-06-19")
     #user_input = input("開始日 > ")
+    
 
     with open(file_path, mode='r') as file:
         reader = csv.DictReader(file)
@@ -25,7 +26,7 @@ def tempature_sum(file_path):
 
     try:
         # 入力された文字列を日付データ（時間の初期値は 00:00:00）に変換
-        day = datetime.strptime(oldest_day, "%Y-%m-%d")
+        day = datetime.strptime(sekisan_date, "%Y-%m-%d")
     except ValueError:
         print("【エラー】入力形式が正しくありません。'2026-06-19' のように入力してください。")
         return -1.0  # エラーのため、プログラムを強制終了させるのではなく、-1を出力
@@ -91,7 +92,12 @@ def tempature_sum(file_path):
 
     print(f"積算温度={sekisanondo:.1f}℃")
 
-    date_count=(1200 - sekisanondo)/ temp
-    print(f"収穫までの日数(予想)：{date_count:.1f}日")
+    if temps and temps[-1] > 0:
+        last_temp = temps[-1]
+        date_count=(1200 - sekisanondo)/ temp
+        print(f"収穫までの日数(予想)：{date_count:.1f}日")
+    else:
+        print("The math is not functional, We puke date_count as a 0.")
+        date_count = 0.0
 
     return sekisanondo, date_count

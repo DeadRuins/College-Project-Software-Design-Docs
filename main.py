@@ -45,10 +45,11 @@ def get_latest_temperature(csv_file_path):
         if df.empty:
             print("The CSV file is empty.")
             return {"latest": "N/A", "avg": "N/A", "sum": "N/A", "TET": "N/A"}
-            
-        with open(Path("sekisan_tmp.txt"), mode='r', encoding="utf-8") as f:
-            print(f.read())
-            sekisan_date = f.read()
+        
+        date_file = ("sekisan_tmp.txt")
+        with open(date_file, mode='r', encoding="utf-8") as f:
+            sekisan_date = f.read().strip()
+            print(f"Loaded date from file: {sekisan_date}")
 
         #total_sum = df["Temperature (°C)"].sum()
         average_temp = df["Temperature (°C)"].mean()
