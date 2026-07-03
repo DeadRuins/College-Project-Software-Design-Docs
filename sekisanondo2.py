@@ -93,8 +93,9 @@ def job():
     print(f"収穫までの日(予想)：{date_count:.1f}日")
 
 schedule.every().day.at("00:00:00").do(job)
+#schedule.every().minute.at(":30").do(job)
 
 while True:
     schedule.run_pending()
-    print("test")
+    #print("test")
     time.sleep(1)
