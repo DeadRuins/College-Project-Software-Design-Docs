@@ -6,7 +6,7 @@ After=network.target
 Type=simple
 User=your_username
 WorkingDirectory=/path/to/your/script/directory
-ExecStart=/bin/sh -c 'sleep 15 && python /home/pi/python main.py'
+ExecStart=/bin/sh -c 'sleep 15 && python /home/pi/main.py'
 Restart=on-failure
 RestartSec=5
 
