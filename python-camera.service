@@ -3,12 +3,8 @@ Description=Python Camera Test Remote Service
 After=network.target
 
 [Service]
-Type=simple
-User=your_username
-WorkingDirectory=/path/to/your/script/directory
+Type=oneshot
 ExecStart=/bin/sh -c 'sleep 15 && python /home/pi/main.py'
-Restart=on-failure
-RestartSec=5
 
 [Install]
 WantedBy=multi-user.target
