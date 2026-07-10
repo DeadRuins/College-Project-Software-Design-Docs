@@ -26,15 +26,7 @@ def upload_to_s3(local_file_path, bucket_name, s3_file_path):
 
 # --- 設定部分 ---
 BUCKET_NAME = 'pbl2026e'  # ステップ1で作ったバケット名に変更
-LOCAL_CSV = '/home/yokoi/data.csv'     # ラズパイ上にある送信したいCSVのパス
+LOCAL_CSV = '/home/pi/temperature_log.csv'     # ラズパイ上にある送信したいCSVのパス
 S3_PATH = 'data/raspberry_pi.csv'  # S3上での保存先パス（フォルダ分けも可能）
 
-if __name__ == "__main__":
-    # テスト用のダミーCSVがなければ作成（検証用）
-    if not os.path.exists(LOCAL_CSV):
-        with open(LOCAL_CSV, 'w') as f:
-            f.write("timestamp,temperature\n2026-07-03 12:00:00,25.4\n")
-        print(f"テスト用のCSVを作成しました: {LOCAL_CSV}")
 
-    # アップロード実行
-    upload_to_s3(LOCAL_CSV, BUCKET_NAME, S3_PATH)

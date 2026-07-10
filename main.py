@@ -10,6 +10,8 @@ import shutil
 import csv
 
 import sekisanondo # unique to this program
+import upload_s3 # unique
+
 from pathlib import Path
 from fastapi import FastAPI, Response, Request
 from fastapi.responses import FileResponse, HTMLResponse
@@ -24,6 +26,10 @@ latest_frame = None
 templates = Jinja2Templates(directory=".")
 ALARM_PATH = "alarm.ogg"
 FILENAME = "temperature_log.csv"
+Upload_Seconds = 180
+AWS_Mode = True
+BUCKET_NAME = 'pbl2026e'  # ステップ1で作ったバケット名に変更
+S3_PATH = 'data/raspberry_pi.csv'  # S3上での保存先パス（フォルダ分けも可能）
 
 # For Image Viewer
 SCRIPT_DIR = Path(__file__).parent.resolve()
@@ -260,11 +266,20 @@ class VideoHandler:
                 
                 cv2.imwrite("current_view.webp", frame, [cv2.IMWRITE_WEBP_QUALITY, 80])
                 
+                # 4. Upload the csv to AWS
+                if (AWS_Mode == True):
+                    try:
+                        upload_s3.upload_to_s3(FILENAME, BUCKET_NAME, S3_PATH)
+                    except:
+                        print("There was Error with AWS. something must gone wrong.")
+                
                 # Update tracker with current timestamp name for next cycle
                 last_date_time = now_file_str
 
             if cv2.waitKey(1) == 27: 
                 break
+                
+            
 
         self.cap.release()
         cv2.destroyAllWindows()
