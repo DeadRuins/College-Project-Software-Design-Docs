@@ -261,7 +261,7 @@ class VideoHandler:
                 last_file_dir = f"past_images/{last_date_time}.webp"
                 
                 if Path("current_view.webp").exists():
-                    shutil.move("current_view.webp", last_file_dir)
+                    shutil.move("current_view.webp", last_file_dir)　#画像ファイルをpast-images/YYYYMMDD_HHMMSS.webpに移動。この辺にupload_s3.upload_to_s3(FILENAME, BUCKET_NAME, S3_PATH)を追加して
                     print("The last current_view.webp was moved into: " + last_file_dir)
                 
                 cv2.imwrite("current_view.webp", frame, [cv2.IMWRITE_WEBP_QUALITY, 80])
