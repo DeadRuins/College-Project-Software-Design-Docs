@@ -137,16 +137,37 @@ async def get_latest():
 @app.get("/history", response_class=HTMLResponse)
 async def history_viewer(request: Request):
     history_dir = Path("past_images")
+    images_data = []
+
     if history_dir.exists():
         images = [f.name for f in history_dir.glob("*.webp")]
         images.sort(reverse=True)
-    else:
-        images = []
+
+        temp_lookup = {}
+        csv_path = Path(FILENAME)
+        if csv_path.exists():
+            try:
+                df = pandas.read_csv(csv_path, parse_dates=["Timestamp"])
+                for _, row in df.iterrows():
+                    ts = row["Timestamp"]
+                    # Format the CSV timestamp to match the filename string pattern
+                    file_ts_key = ts.strftime("%Y%m%d_%H%M%S")
+                    temp_lookup[file_ts_key] = f"{row['Temperature (°C)']:.1f}"
+            except Exception as e:
+                print(f"Error indexing CSV for history: {e}")
+
+        for img_name in images:
+            ts_key = Path(img_name).stem
+            temperature = temp_lookup.get(ts_key, "N/A")
+            images_data.append({
+                "filename": img_name,
+                "temperature": temperature
+            })
 
     return templates.TemplateResponse(
         request=request,
         name="history.html",
-        context={"images": images}
+        context={"images": images_data}
     )
 
 class VideoHandler:
@@ -174,19 +195,26 @@ class VideoHandler:
         cv2.imwrite("current_view.webp", placeholder, [cv2.IMWRITE_WEBP_QUALITY, 80])
 
     def record_temperature(self, now_str):
-        """Helper to read DHT22 and write to CSV."""
-        try:
-            temperature = self.dhtDevice.temperature
-            if temperature is not None:
-                with open(FILENAME, mode="a", newline="", encoding="utf-8") as file:
-                    writer = csv.writer(file)
-                    writer.writerow([now_str, temperature])
-                print(f"[{now_str}] Temp Logged: {temperature} °C")
-                return temperature
-        except RuntimeError as error:
-            # DHT sensors fail often, log the error but do not crash
-            print(f"DHT Read Error: {error.args[0]}")
-        return None
+            """Helper to read DHT22 and write to CSV."""
+            def thermal_worker():
+                retries = 5
+                for attempt in range(retries):
+                    try:
+                        temperature = self.dhtDevice.temperature
+                        if temperature is not None:
+                            with open(FILENAME, mode="a", newline="", encoding="utf-8") as file:
+                                writer = csv.writer(file)
+                                writer.writerow([now_str, temperature])
+                            print(f"[{now_str}] Temp Logged: {temperature} °C")
+                            return
+                    except RuntimeError as error:
+                        print(f"DHT Read Error: {error.args[0]}")
+
+                    if attempt < retries - 1:
+                        #time.sleep(2)
+                        print(f"[{now_str}] Failed to collect data after 5 attempts.")
+
+            threading.Thread(target=thermal_worker, daemon=True).start()
 
     def run_camera(self):
         last_save_time = time.time()
