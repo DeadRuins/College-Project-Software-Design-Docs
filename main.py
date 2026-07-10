@@ -230,7 +230,7 @@ class VideoHandler:
         if not self.camera_working:
             print("Camera handler is idling smoothly. Server is online.")
             while True:
-                if time.time() - last_save_time >= 60: #30 minutes
+                if time.time() - last_save_time >= Upload_Seconds: #30 minutes
                     last_save_time = time.time()
                     now_formatted = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                     self.record_temperature(now_formatted)
@@ -245,7 +245,7 @@ class VideoHandler:
             cv2.imshow("Frame", frame)
 
             # --- SYNCHRONIZED SNAPSHOT AND SENSOR EVENT ---
-            if time.time() - last_save_time >= 60:
+            if time.time() - last_save_time >= Upload_Seconds:
                 last_save_time = time.time()
                 
                 # 1. Grab consistent timestamp for both actions
