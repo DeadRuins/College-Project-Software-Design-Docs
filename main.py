@@ -11,6 +11,7 @@ import csv
 
 import sekisanondo # unique to this program
 import upload_s3 # unique
+import upload_all # unique
 
 from pathlib import Path
 from fastapi import FastAPI, Response, Request
@@ -26,10 +27,12 @@ latest_frame = None
 templates = Jinja2Templates(directory=".")
 ALARM_PATH = "alarm.ogg"
 FILENAME = "temperature_log.csv"
-Upload_Seconds = 180
+Upload_Seconds = 1
 AWS_Mode = True
 BUCKET_NAME = 'pbl2026e'  # ステップ1で作ったバケット名に変更
 S3_PATH = 'data/raspberry_pi.csv'  # S3上での保存先パス（フォルダ分けも可能）
+LOCAL_IMAGE = '/home/pi/current_view.webp'          # ラズパイ側の画像のパス
+S3_IMAGE_PATH = 'images/current_view.webp'      # S3側の保存先パス
 
 # For Image Viewer
 SCRIPT_DIR = Path(__file__).parent.resolve()
@@ -261,7 +264,7 @@ class VideoHandler:
                 last_file_dir = f"past_images/{last_date_time}.webp"
                 
                 if Path("current_view.webp").exists():
-                    shutil.move("current_view.webp", last_file_dir)　#画像ファイルをpast-images/YYYYMMDD_HHMMSS.webpに移動。この辺にupload_s3.upload_to_s3(FILENAME, BUCKET_NAME, S3_PATH)を追加して
+                    shutil.move("current_view.webp", last_file_dir)
                     print("The last current_view.webp was moved into: " + last_file_dir)
                 
                 cv2.imwrite("current_view.webp", frame, [cv2.IMWRITE_WEBP_QUALITY, 80])
@@ -269,9 +272,10 @@ class VideoHandler:
                 # 4. Upload the csv to AWS
                 if (AWS_Mode == True):
                     try:
-                        upload_s3.upload_to_s3(FILENAME, BUCKET_NAME, S3_PATH)
+                        upload_all.upload_to_s3(FILENAME, BUCKET_NAME, S3_PATH)
+                        upload_all.upload_to_s3(LOCAL_IMAGE, BUCKET_NAME, S3_IMAGE_PATH)
                     except:
-                        print("There was Error with AWS. something must gone wrong.")
+                        print("There was Error with AWS. something must gone wrong with AWS configuration.")
                 
                 # Update tracker with current timestamp name for next cycle
                 last_date_time = now_file_str
